@@ -100,7 +100,7 @@ class FilmControllerTest {
     }
 
     @Test
-    void GetAllTest() {
+    void getAllTest() {
         filmController.create(film);
         Film film1 = Film.builder()
                 .name("Другое название фильма")
