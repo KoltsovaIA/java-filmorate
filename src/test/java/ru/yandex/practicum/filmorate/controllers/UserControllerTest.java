@@ -97,7 +97,7 @@ class UserControllerTest {
     }
 
     @Test
-    void GetAllTest() {
+    void getAllTest() {
         userController.create(user);
         User user1 = User.builder()
                 .email("example1@example.ru")
