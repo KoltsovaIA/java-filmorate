@@ -6,12 +6,13 @@ import ru.yandex.practicum.filmorate.exceptions.*;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class UserControllerTest {
     private User user;
-    UserController userController = new UserController();
+    private final UserController userController = new UserController();
 
     @BeforeEach
     public void beforeEach() {
@@ -25,9 +26,12 @@ class UserControllerTest {
 
     @Test
     void createWithCorrectAttributesTest() {
-        User user1 = userController.create(user);
-        assertEquals(user, user1, "Пользователи совпадают");
-        assertEquals(1, userController.getAll().size(), "Добавление пользователя прошло успешно");
+        userController.create(user);
+        User testUser = userController.getById(userController.getLastId());
+        assertEquals(user, testUser, "Пользователи не совпадают");
+        testUser.setLogin("Kjf");
+        assertNotEquals(user, testUser, "Пользователи совпадают");
+        assertEquals(1, userController.getAll().size(), "Неверное число пользователей");
     }
 
     @Test
@@ -35,14 +39,15 @@ class UserControllerTest {
         user.setEmail("IncorrectEmail");
         assertThrows(InvalidEmailException.class, () -> userController.create(user));
         assertEquals(0, userController.getAll().size(),
-                "Пользователь с некорректным e-mail не сохранен");
+                "Сохранен пользователь с некорректным e-mail");
     }
 
     @Test
     void createWithEmptyLoginTest() {
         user.setLogin("");
         assertThrows(UserLoginException.class, () -> userController.create(user));
-        assertEquals(0, userController.getAll().size(), "Пользователь с пустым логином не сохранен");
+        assertEquals(0, userController.getAll().size(),
+                "Сохранен пользователь с пустым логином");
     }
 
     @Test
@@ -50,62 +55,60 @@ class UserControllerTest {
         user.setLogin("Ло гин");
         assertThrows(UserLoginException.class, () -> userController.create(user));
         assertEquals(0, userController.getAll().size(),
-                "Пользователь с некорректным логином не сохранен");
+                "Сохранен пользователь с некорректным логином");
     }
 
     @Test
     void createWithEmptyNameTest() {
         user.setName(null);
         user.setLogin("Логин");
-        User user1 = userController.create(user);
-        assertEquals("Логин", user1.getName(),
-                "Добавление пользователя c пустым именем прошло успешно");
-        assertEquals(1, userController.getAll().size(), "Добавление пользователя прошло успешно");
+        userController.create(user);
+        User testUser = userController.getById(userController.getLastId());
+        assertEquals("Логин", testUser.getName(),
+                "Добавлен пользователя c пустым именем, имя должно равняться логину");
+        assertEquals(1, userController.getAll().size(), "Неверное число пользователей");
     }
 
     @Test
     void createWithIncorrectBirthdayTest() {
         user.setBirthday(LocalDate.now().plusYears(2));
         assertThrows(UserBirthdayException.class, () -> userController.create(user),
-                "Попытка создать пользователя c датой рождения в будущем");
+                "Создан пользователь c датой рождения в будущем");
         assertEquals(0, userController.getAll().size(),
-                "Пользователь с датой рождения в будущем не сохранен");
+                "Неверное число пользователей");
     }
 
     @Test
     void createWithSameEmailTest() {
-        userController.update(user);
-        user.setEmail("example@example.ru");
+        userController.create(user);
         assertThrows(UserAlreadyExistException.class, () -> userController.create(user),
-                "Попытка создать пользователя c существующим e-mail");
+                "Создан пользователь c существующим e-mail");
         assertEquals(1, userController.getAll().size(),
-                "Фильм с существующим названием не сохранен");
+                "Неверное число пользователей");
     }
 
     @Test
-    void updateTest() {
+    void updateTest() throws Exception {
         userController.create(user);
-        User user1 = User.builder()
-                .id(1)
-                .email("example@example.ru")
-                .login("Логин")
-                .name("Новое Имя")
-                .birthday(LocalDate.of(2000, 10, 15))
-                .build();
-        userController.update(user1);
-        assertEquals(1, userController.getAll().size(), "Пользователь успешно обновлен");
+        user.setId(userController.getLastId());
+        user.setName("Новое Имя");
+        userController.update(user);
+        User testUser = userController.getById(userController.getLastId());
+        assertEquals(user, testUser, "Пользователи не совпадают");
+        assertEquals(1, userController.getAll().size(), "Неверное число пользователей");
     }
 
     @Test
     void getAllTest() {
         userController.create(user);
-        User user1 = User.builder()
-                .email("example1@example.ru")
-                .login("Логин")
-                .name("Имя")
-                .birthday(LocalDate.of(2000, 10, 15))
-                .build();
-        userController.create(user1);
-        assertEquals(2, userController.getAll().size(), "Пользователи возвращаются не корректно");
+        User testUser1 = userController.getById(userController.getLastId());
+        user.setEmail("example1@example.ru");
+        userController.create(user);
+        User testUser2 = userController.getById(userController.getLastId());
+        List<User> testUsers = userController.getAll();
+        assertEquals(2, testUsers.size(), "Неверное число пользователей");
+        assertEquals(testUser1, testUsers.get(0), "Пользователи не совпадают");
+        testUser2.setName("nvfdksn");
+        assertNotEquals(testUser2, testUsers.get(1), "Пользователи совпадают");
     }
 }
