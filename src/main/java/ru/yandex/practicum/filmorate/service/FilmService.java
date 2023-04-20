@@ -57,8 +57,8 @@ public class FilmService {
         Set<Film> sortedByLikes = new LinkedHashSet<>();
         List<Film> allFilms = filmStorage.getAllFilms();
         if (allFilms.size() != 0) {
-            allFilms.stream().sorted(Comparator.nullsLast(Comparator.comparingInt(o -> o.getLikes().size()))).
-                    forEach(sortedByLikes::add);
+            allFilms.stream().sorted(Comparator.nullsLast(Comparator.comparingInt(o -> o.getLikes().size())))
+                    .forEach(sortedByLikes::add);
             sortedByLikes = sortedByLikes.stream().skip(0).limit(count).collect(Collectors.toSet());
         }
         log.info("Сформирован список из " + count + " самых популярных фильмов");
