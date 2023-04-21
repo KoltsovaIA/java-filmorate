@@ -15,13 +15,12 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class FilmService {
-    FilmStorage filmStorage;
+    private final FilmStorage filmStorage;
 
     @Autowired
     public FilmService(FilmStorage filmStorage) {
         this.filmStorage = filmStorage;
     }
-
 
     public void addLike(int id, int filmId) {
         if ((id <= 0) || (filmId <= 0)) {

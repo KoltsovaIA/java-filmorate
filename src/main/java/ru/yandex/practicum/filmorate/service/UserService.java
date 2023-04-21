@@ -15,7 +15,7 @@ import java.util.Set;
 @Slf4j
 @Service
 public class UserService {
-    UserStorage userStorage;
+    private final UserStorage userStorage;
 
     @Autowired
     public UserService(UserStorage userStorage) {
@@ -39,7 +39,7 @@ public class UserService {
         }
         log.info(user.toString());
         userStorage.update(user);
-        log.info("Пользователь " + userStorage.getUserById(friendId).getName() + " добавлен в друзья");
+        log.info("Пользователь " + user.getName() + " добавлен в друзья");
         friend.getFriends().add(id);
         log.info(friend.toString());
         userStorage.update(friend);

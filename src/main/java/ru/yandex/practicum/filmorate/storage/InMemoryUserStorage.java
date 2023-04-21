@@ -35,7 +35,7 @@ public class InMemoryUserStorage implements UserStorage {
                 .build()
         );
         log.info("Вы добавили пользователя " + user.getName() + users.size());
-        log.info(String.valueOf(user));
+        log.info(user.toString());
         return user;
     }
 

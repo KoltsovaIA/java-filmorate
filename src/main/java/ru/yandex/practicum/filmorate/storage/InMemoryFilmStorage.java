@@ -35,7 +35,7 @@ public class InMemoryFilmStorage implements FilmStorage {
                 .likes(film.getLikes())
                 .build()
         );
-        log.info("Вы добавили фильм " + film.getName());
+        log.info("Фильм с названием " + film.getName() + " добавлен");
         return film;
     }
 
@@ -53,7 +53,7 @@ public class InMemoryFilmStorage implements FilmStorage {
                 .likes(film.getLikes())
                 .build()
         );
-        log.info("Вы обновили фильм " + film.getName());
+        log.info("Фильм с названием " + film.getName() + " добавлен");
         return film;
     }
 

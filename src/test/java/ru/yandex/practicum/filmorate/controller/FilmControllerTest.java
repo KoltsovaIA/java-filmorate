@@ -9,9 +9,12 @@ import ru.yandex.practicum.filmorate.storage.InMemoryFilmStorage;
 
 import java.time.LocalDate;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class FilmControllerTest {
     private Film film;
@@ -34,7 +37,7 @@ class FilmControllerTest {
     @Test
     void createWithCorrectAttributesTest() {
         filmController.create(film);
-        Film testFilm = filmController.getById(filmController.getLastId());
+        Film testFilm = filmController.getFilmById(filmController.getLastId());
         assertEquals(film, testFilm, "Фильмы не совпадают");
         testFilm.setName("Kjd");
         assertNotEquals(film, testFilm, "Фильмы совпадают");
@@ -101,7 +104,7 @@ class FilmControllerTest {
         film.setId(filmController.getLastId());
         film.setDescription("Другое описание фильма");
         filmController.update(film);
-        Film testFilm = filmController.getById(filmController.getLastId());
+        Film testFilm = filmController.getFilmById(filmController.getLastId());
         assertEquals(film, testFilm, "Фильмы не совпадают");
         assertEquals(1, filmController.getAllFilms().size(), "Неверное число фильмов");
     }
@@ -109,15 +112,40 @@ class FilmControllerTest {
     @Test
     void getAllTest() {
         filmController.create(film);
-        Film testFilm1 = filmController.getById(filmController.getLastId());
+        Film testFilm1 = filmController.getFilmById(filmController.getLastId());
         film.setName("Другое название фильма");
         filmController.create(film);
-        Film testFilm2 = filmController.getById(filmController.getLastId());
+        Film testFilm2 = filmController.getFilmById(filmController.getLastId());
         List<Film> testFilms = filmController.getAllFilms();
 
         assertEquals(2, testFilms.size(), "Неверное число фильмов");
         assertEquals(testFilm1, testFilms.get(0), "Фильмы не совпадают");
         testFilm2.setDescription("ups");
         assertNotEquals(testFilm2, testFilms.get(1), "Фильмы совпадают");
+    }
+
+    @Test
+    void getByIdWithCorrectAttributesTest() {
+        filmController.create(film);
+        assertEquals(film, filmController.getFilmById(1));
+    }
+
+    @Test
+    void getFilmByIdWithWrongIdTest() {
+        filmController.create(film);
+        Integer id = 9999;
+        assertThrows(FilmNotFoundException.class, () -> filmController.getFilmById(id),
+                "Не найден фильм с id" + id);
+    }
+
+    @Test
+    void getLikesWithCorrectAttributesTest() {
+        filmController.create(film);
+        film.getLikes().add(10);
+        film.getLikes().add(20);
+        film.setId(1);
+        filmController.update(film);
+        assertEquals(10, filmController.getFilmById(1).getLikes().stream().iterator().next());
+        assertEquals(2, filmController.getFilmById(1).getLikes().size());
     }
 }

@@ -39,7 +39,7 @@ public class UserController {
         return userStorage.getAllUsers();
     }
 
-    @GetMapping(path = {"/{id}"})
+    @GetMapping({"/{id}"})
     public User getById(@PathVariable Integer id) {
         return userStorage.getUserById(id);
     }
@@ -48,22 +48,22 @@ public class UserController {
         return userStorage.getLastId();
     }
 
-    @PutMapping(path = {"{id}/friends/{friendId}"})
+    @PutMapping({"{id}/friends/{friendId}"})
     public Set<Integer> addFriend(@PathVariable int id, @PathVariable int friendId) {
         return userService.addFriend(id, friendId);
     }
 
-    @DeleteMapping(path = {"/{id}/friends/{friendId}"})
+    @DeleteMapping({"/{id}/friends/{friendId}"})
     public void deleteFriend(@PathVariable int id, @PathVariable int friendId) {
         userService.deleteFriend(id, friendId);
     }
 
-    @GetMapping(path = {"{id}/friends"})
+    @GetMapping({"{id}/friends"})
     public Set<User> getFriends(@PathVariable Integer id) {
         return userService.getFriends(id);
     }
 
-    @GetMapping(path = {"{id}/friends/common/{otherId}"})
+    @GetMapping({"{id}/friends/common/{otherId}"})
     public Set<User> findCommonFriends(@PathVariable int id, @PathVariable int otherId) {
         return userService.findCommonFriends(id, otherId);
     }
