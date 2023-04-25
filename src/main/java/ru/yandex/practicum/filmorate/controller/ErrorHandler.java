@@ -17,7 +17,6 @@ public class ErrorHandler {
         return new ErrorResponse(String.format("Ошибка с полем \"%s\".", e.getParameter()));
     }
 
-
     @ExceptionHandler
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponse handleFilmNotFoundException(final FilmNotFoundException e) {

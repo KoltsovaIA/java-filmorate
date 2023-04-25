@@ -40,7 +40,7 @@ public class UserController {
     }
 
     @GetMapping({"/{id}"})
-    public User getById(@PathVariable Integer id) {
+    public User getUserById(@PathVariable Integer id) {
         return userStorage.getUserById(id);
     }
 
@@ -49,8 +49,8 @@ public class UserController {
     }
 
     @PutMapping({"{id}/friends/{friendId}"})
-    public Set<Integer> addFriend(@PathVariable int id, @PathVariable int friendId) {
-        return userService.addFriend(id, friendId);
+    public void addFriend(@PathVariable int id, @PathVariable int friendId) {
+        userService.addFriend(id, friendId);
     }
 
     @DeleteMapping({"/{id}/friends/{friendId}"})

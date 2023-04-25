@@ -15,5 +15,5 @@ public interface UserStorage {
 
     int getLastId();
 
-    boolean checkId(int id);
+    void userIdIsExist(int id);
 }

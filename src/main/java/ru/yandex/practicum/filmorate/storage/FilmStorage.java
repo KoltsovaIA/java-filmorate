@@ -17,4 +17,6 @@ public interface FilmStorage {
     int getLastId();
 
     Set<Integer> getLikes(int id);
+
+    void filmIdIsExist(int id);
 }

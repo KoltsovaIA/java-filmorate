@@ -40,10 +40,8 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     public Film update(Film film) {
-        if (!films.containsKey(film.getId())) {
-            return create(film);
-        }
         checkFilm(film);
+        filmIdIsExist(film.getId());
         films.put(film.getId(), Film.builder()
                 .id(film.getId())
                 .name(film.getName())
@@ -73,9 +71,7 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     public Film getFilmById(int id) {
-        if (!films.containsKey(id)) {
-            throw new FilmNotFoundException("Фильм c id " + id + " не найден.");
-        }
+        filmIdIsExist(id);
         Film film = films.get(id);
         return Film.builder()
                 .id(film.getId())
@@ -88,7 +84,12 @@ public class InMemoryFilmStorage implements FilmStorage {
     }
 
     public Set<Integer> getLikes(int id) {
-        return films.get(id).getLikes();
+        filmIdIsExist(id);
+        Set<Integer> likes = films.get(id).getLikes();
+        if (likes == null) {
+            likes = new LinkedHashSet<>();
+        }
+        return likes;
     }
 
     public int getNewId() {
@@ -112,6 +113,16 @@ public class InMemoryFilmStorage implements FilmStorage {
         }
         if (film.getDuration() <= 0) {
             throw new IncorrectParameterException("Продолжительность фильма должна быть больше нуля");
+        }
+        if (film.getLikes() == null) {
+            film.setLikes(new LinkedHashSet<>());
+        }
+    }
+
+    public void filmIdIsExist(int id) {
+        if ((id <= 0) || (!films.containsKey(id))) {
+            log.error("Передан некорректный id " + id);
+            throw new FilmNotFoundException("Некорректный id " + id);
         }
     }
 }

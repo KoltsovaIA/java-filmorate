@@ -8,6 +8,7 @@ import ru.yandex.practicum.filmorate.exception.IncorrectParameterException;
 import ru.yandex.practicum.filmorate.exception.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -16,37 +17,40 @@ import java.util.stream.Collectors;
 @Service
 public class FilmService {
     private final FilmStorage filmStorage;
+    private final UserStorage userStorage;
 
     @Autowired
-    public FilmService(FilmStorage filmStorage) {
+    public FilmService(FilmStorage filmStorage, UserStorage userStorage) {
         this.filmStorage = filmStorage;
+
+        this.userStorage = userStorage;
     }
 
-    public void addLike(int id, int filmId) {
-        if ((id <= 0) || (filmId <= 0)) {
-            throw new IncorrectParameterException("id не может быть меньше единицы");
-        }
-        Film film = filmStorage.getFilmById(filmId);
-        if (film.getLikes() == null) {
-            film.setLikes(new LinkedHashSet<>());
-        }
-        if (film.getLikes().contains(id)) {
+    public void addLike(int id, int userId) {
+        filmStorage.filmIdIsExist(id);
+        userStorage.userIdIsExist(userId);
+        Film film = filmStorage.getFilmById(id);
+        if (film.getLikes().contains(userId)) {
             log.error("Один пользователь не может ставить несколько лайков одному фильму");
             throw new FilmAlreadyExistException("Один пользователь не может ставить несколько лайков одному фильму");
         }
-        film.getLikes().add(id);
+        film.getLikes().add(userId);
         filmStorage.update(film);
-        log.info("Вам понравился фильм " + filmStorage.getFilmById(filmId));
+        log.info("Пользователь " + userStorage.getUserById(userId) + " поставил лайк фильму "
+                + filmStorage.getFilmById(id));
     }
 
-    public void deleteLike(int id, int filmId) {
-        if (!filmStorage.getFilmById(filmId).getLikes().contains(id)) {
+    public void deleteLike(int id, int userId) {
+        filmStorage.filmIdIsExist(id);
+        userStorage.userIdIsExist(userId);
+        if (!filmStorage.getFilmById(id).getLikes().contains(userId)) {
             log.error("Невозможно удалить лайк.");
             throw new UserNotFoundException("Вы еще не ставили лайк этому фильму.");
         }
-        filmStorage.getFilmById(filmId).getLikes().remove(id);
-        filmStorage.update(filmStorage.getFilmById(filmId));
-        log.info("Вам больше не нравится фильм " + filmStorage.getFilmById(filmId));
+        filmStorage.getFilmById(id).getLikes().remove(userId);
+        filmStorage.update(filmStorage.getFilmById(id));
+        log.info("Пользователь " + userStorage.getUserById(userId) + " удалил лайк фильму "
+                + filmStorage.getFilmById(id));
     }
 
     public Set<Film> findMostPopularFilms(Integer count) {
@@ -55,12 +59,13 @@ public class FilmService {
         }
         Set<Film> sortedByLikes = new LinkedHashSet<>();
         List<Film> allFilms = filmStorage.getAllFilms();
+        log.info(allFilms.toString());
         if (allFilms.size() != 0) {
-            allFilms.stream().sorted(Comparator.nullsLast(Comparator.comparingInt(o -> o.getLikes().size())))
-                    .forEach(sortedByLikes::add);
-            sortedByLikes = sortedByLikes.stream().skip(0).limit(count).collect(Collectors.toSet());
+            Comparator<Film> comparator = Comparator.comparingInt((Film film) -> film.getLikes().size());
+            sortedByLikes = filmStorage.getAllFilms().stream().sorted(comparator.reversed()).limit(count)
+                    .collect(Collectors.toSet());
         }
-        log.info("Сформирован список из " + count + " самых популярных фильмов");
+        log.info("Сформирован список из " + count + " самых популярных фильмов" + sortedByLikes);
         return sortedByLikes;
     }
 }

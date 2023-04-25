@@ -22,9 +22,9 @@ public class UserService {
         this.userStorage = userStorage;
     }
 
-    public Set<Integer> addFriend(int id, int friendId) {
-        isIdExist(friendId);
-        isIdExist(id);
+    public void addFriend(int id, int friendId) {
+        userStorage.userIdIsExist(friendId);
+        userStorage.userIdIsExist(id);
         User user = userStorage.getUserById(id);
         User friend = userStorage.getUserById(friendId);
         if (user.getFriends() == null) {
@@ -34,7 +34,8 @@ public class UserService {
             friend.setFriends(new LinkedHashSet<>());
         }
         if (!user.getFriends().add(friendId)) {
-            log.error("Пользователь с id " + friendId + " уже добавлен в друзья.");
+            log.error("Пользователь с id " + friendId + " уже добавлен в друзья у пользователя" +
+                    userStorage.getUserById(id));
             throw new UserAlreadyExistException("Этот пользователь уже добавлен в друзья.");
         }
         log.info(user.toString());
@@ -43,13 +44,12 @@ public class UserService {
         friend.getFriends().add(id);
         log.info(friend.toString());
         userStorage.update(friend);
-        log.info("Пользователь " + userStorage.getUserById(friendId).getName() + " добавил вас в друзья");
-        return userStorage.getUserById(id).getFriends();
+        log.info("Пользователь " + userStorage.getUserById(friendId).getName() + " добавлен в  друзья");
     }
 
-    public Set<Integer> deleteFriend(int id, int friendId) {
-        isIdExist(friendId);
-        isIdExist(id);
+    public void deleteFriend(int id, int friendId) {
+        userStorage.userIdIsExist(friendId);
+        userStorage.userIdIsExist(id);
         if (!userStorage.getUserById(id).getFriends().contains(friendId)) {
             log.error("Пользователя с id " + friendId + " нет в списке друзей.");
             throw new UserNotFoundException("Этого пользователя нет в друзьях.");
@@ -60,11 +60,10 @@ public class UserService {
         userStorage.getUserById(friendId).getFriends().remove(id);
         userStorage.update(userStorage.getUserById(friendId));
         log.info("Пользователь " + userStorage.getUserById(friendId).getName() + " удалил вас из друзей");
-        return userStorage.getUserById(id).getFriends();
     }
 
     public Set<User> getFriends(int id) {
-        isIdExist(id);
+        userStorage.userIdIsExist(id);
         Set<Integer> friendsId = userStorage.getUserById(id).getFriends();
         Set<User> friends = new LinkedHashSet<>();
         if (friendsId == null) {
@@ -78,6 +77,8 @@ public class UserService {
     }
 
     public Set<User> findCommonFriends(int firstId, int secondId) {
+        userStorage.userIdIsExist(firstId);
+        userStorage.userIdIsExist(secondId);
         HashSet<User> firstUserFriends = new HashSet<>(getFriends(firstId));
         HashSet<User> secondUserFriends = new HashSet<>(getFriends(secondId));
         try {
@@ -87,11 +88,5 @@ public class UserService {
         }
         log.info("Список общих друзей сформирован: " + firstUserFriends);
         return firstUserFriends;
-    }
-
-    private void isIdExist(int id) {
-        if (!userStorage.checkId(id)) {
-            throw new UserNotFoundException("Некорректный id " + id);
-        }
     }
 }

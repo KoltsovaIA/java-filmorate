@@ -34,7 +34,7 @@ public class InMemoryUserStorage implements UserStorage {
                 .friends(user.getFriends())
                 .build()
         );
-        log.info("Вы добавили пользователя " + user.getName() + users.size());
+        log.info("Добавлен пользователь " + user.getName() + users.size());
         log.info(user.toString());
         return user;
     }
@@ -53,7 +53,7 @@ public class InMemoryUserStorage implements UserStorage {
                 .friends(user.getFriends())
                 .build()
         );
-        log.info("Вы обновили данные пользователя " + user.getName());
+        log.info("Обновлен пользователь " + user.getName());
         return user;
     }
 
@@ -73,9 +73,7 @@ public class InMemoryUserStorage implements UserStorage {
     }
 
     public User getUserById(int id) {
-        if (!users.containsKey(id)) {
-            throw new UserNotFoundException("Пользователь с id " + id + " не найден.");
-        }
+        userIdIsExist(id);
         User user = users.get(id);
         return User.builder()
                 .id(user.getId())
@@ -118,12 +116,10 @@ public class InMemoryUserStorage implements UserStorage {
         }
     }
 
-    public boolean checkId(int id) {
-        boolean checkId = true;
-        if ((id <= 0) || (!users.containsKey(id)) || (getUserById(id) == null)) {
+    public void userIdIsExist(int id) {
+        if ((id <= 0) || (!users.containsKey(id))) {
             log.error("Передан некорректный id " + id);
-            checkId = false;
+            throw new UserNotFoundException("Некорректный id " + id);
         }
-        return checkId;
     }
 }
