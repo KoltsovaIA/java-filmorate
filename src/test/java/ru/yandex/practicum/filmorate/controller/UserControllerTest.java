@@ -13,7 +13,7 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class UserControllerTest {
-    Integer WRONGID = 999999;
+    static final int WRONGID = 999999;
     private User user;
     private final InMemoryUserStorage userStorage = new InMemoryUserStorage();
     private final UserService userService = new UserService(userStorage);

@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class FilmControllerTest {
-    Integer WRONGID = 999999;
+    static final int WRONGID = 999999;
     private Film film;
     private User user;
 
