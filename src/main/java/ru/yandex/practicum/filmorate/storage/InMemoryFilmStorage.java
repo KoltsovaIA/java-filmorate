@@ -1,23 +1,22 @@
-package ru.yandex.practicum.filmorate.controllers;
+package ru.yandex.practicum.filmorate.storage;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exceptions.*;
+import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.exception.*;
 import ru.yandex.practicum.filmorate.model.Film;
 
 import java.time.LocalDate;
 import java.util.*;
 
+
+@Component
 @Slf4j
-@RestController
-@RequestMapping("/films")
-public class FilmController {
+public class InMemoryFilmStorage implements FilmStorage {
     private final Map<Integer, Film> films = new HashMap<>();
     private int id = 0;
 
-    @PostMapping
-    public Film create(@RequestBody Film film) {
+    public Film create(Film film) {
         checkFilm(film);
         films.forEach((key, value) -> {
             if (value.getName().equals(film.getName())) {
@@ -26,38 +25,37 @@ public class FilmController {
             }
         });
         film.setId(getNewId());
+        film.setLikes(new LinkedHashSet<>());
         films.put(film.getId(), Film.builder()
                 .id(film.getId())
                 .name(film.getName())
                 .description(film.getDescription())
                 .releaseDate(film.getReleaseDate())
                 .duration(film.getDuration())
+                .likes(film.getLikes())
                 .build()
         );
-        log.info("Вы добавили фильм " + film.getName());
+        log.info("Фильм с названием " + film.getName() + " добавлен");
         return film;
     }
 
-    @PutMapping
-    public Film update(@RequestBody Film film) {
-        if (!films.containsKey(film.getId())) {
-            return create(film);
-        }
+    public Film update(Film film) {
         checkFilm(film);
+        filmIdIsExist(film.getId());
         films.put(film.getId(), Film.builder()
                 .id(film.getId())
                 .name(film.getName())
                 .description(film.getDescription())
                 .releaseDate(film.getReleaseDate())
                 .duration(film.getDuration())
+                .likes(film.getLikes())
                 .build()
         );
-        log.info("Вы обновили фильм " + film.getName());
+        log.info("Фильм с названием " + film.getName() + " добавлен");
         return film;
     }
 
-    @GetMapping
-    public List<Film> getAll() {
+    public List<Film> getAllFilms() {
         ArrayList<Film> filmsList = new ArrayList<>();
         for (Film value : films.values()) {
             filmsList.add(Film.builder()
@@ -66,13 +64,14 @@ public class FilmController {
                     .description(value.getDescription())
                     .releaseDate(value.getReleaseDate())
                     .duration(value.getDuration())
+                    .likes(value.getLikes())
                     .build());
         }
         return filmsList;
     }
 
-    @GetMapping(path = {"/film"})
-    public Film getById(@RequestBody int id) {
+    public Film getFilmById(int id) {
+        filmIdIsExist(id);
         Film film = films.get(id);
         return Film.builder()
                 .id(film.getId())
@@ -80,7 +79,17 @@ public class FilmController {
                 .description(film.getDescription())
                 .releaseDate(film.getReleaseDate())
                 .duration(film.getDuration())
+                .likes(film.getLikes())
                 .build();
+    }
+
+    public Set<Integer> getLikes(int id) {
+        filmIdIsExist(id);
+        Set<Integer> likes = films.get(id).getLikes();
+        if (likes == null) {
+            likes = new LinkedHashSet<>();
+        }
+        return likes;
     }
 
     public int getNewId() {
@@ -93,17 +102,27 @@ public class FilmController {
 
     private void checkFilm(Film film) {
         if (StringUtils.isBlank(film.getName())) {
-            throw new InvalidFilmNameException("Название фильма не может быть пустым");
+            throw new IncorrectParameterException("Название фильма не может быть пустым");
         }
         if (film.getDescription().length() > 200) {
-            throw new FilmDescriptionLengthException("Описание фильма не должно превышать 200 символов");
+            throw new IncorrectParameterException("Описание фильма не должно превышать 200 символов");
         }
         if (film.getReleaseDate() == null || film.getReleaseDate().toString().isBlank() ||
                 film.getReleaseDate().isBefore(LocalDate.of(1895, 12, 28))) {
-            throw new FilmDateException("Дата релиза не может быть раньше 28.12.1895");
+            throw new IncorrectParameterException("Дата релиза не может быть раньше 28.12.1895");
         }
         if (film.getDuration() <= 0) {
-            throw new FilmDurationException("Продолжительность фильма должна быть больше нуля");
+            throw new IncorrectParameterException("Продолжительность фильма должна быть больше нуля");
+        }
+        if (film.getLikes() == null) {
+            film.setLikes(new LinkedHashSet<>());
+        }
+    }
+
+    public void filmIdIsExist(int id) {
+        if ((id <= 0) || (!films.containsKey(id))) {
+            log.error("Передан некорректный id " + id);
+            throw new FilmNotFoundException("Некорректный id " + id);
         }
     }
 }

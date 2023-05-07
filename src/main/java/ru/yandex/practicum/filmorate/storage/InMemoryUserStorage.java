@@ -1,23 +1,21 @@
-package ru.yandex.practicum.filmorate.controllers;
+package ru.yandex.practicum.filmorate.storage;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.web.bind.annotation.*;
-import ru.yandex.practicum.filmorate.exceptions.*;
+import org.springframework.stereotype.Component;
+import ru.yandex.practicum.filmorate.exception.*;
 import ru.yandex.practicum.filmorate.model.User;
 
 import java.time.LocalDate;
 import java.util.*;
 
+@Component
 @Slf4j
-@RestController
-@RequestMapping("/users")
-public class UserController {
+public class InMemoryUserStorage implements UserStorage {
     private final Map<Integer, User> users = new HashMap<>();
     private int id = 0;
 
-    @PostMapping
-    public User create(@RequestBody User user) {
+    public User create(User user) {
         checkUser(user);
         users.forEach((key, value) -> {
             if (value.getEmail().equals(user.getEmail())) {
@@ -26,22 +24,24 @@ public class UserController {
             }
         });
         user.setId(getNewId());
+        user.setFriends(new LinkedHashSet<>());
         users.put(user.getId(), User.builder()
                 .id(user.getId())
                 .email(user.getEmail())
                 .login(user.getLogin())
                 .name(user.getName())
                 .birthday(user.getBirthday())
+                .friends(user.getFriends())
                 .build()
         );
-        log.info("Вы добавили пользователя " + user.getName() + users.size());
+        log.info("Добавлен пользователь " + user.getName() + users.size());
+        log.info(user.toString());
         return user;
     }
 
-    @PutMapping
-    public User update(@RequestBody User user) {
+    public User update(User user) {
         if (!users.containsKey(user.getId())) {
-            return create(user);
+            throw new UserNotFoundException("Пользователь с id " + id + " не найден.");
         }
         checkUser(user);
         users.put(user.getId(), User.builder()
@@ -50,14 +50,14 @@ public class UserController {
                 .login(user.getLogin())
                 .name(user.getName())
                 .birthday(user.getBirthday())
+                .friends(user.getFriends())
                 .build()
         );
-        log.info("Вы обновили данные пользователя " + user.getName());
+        log.info("Обновлен пользователь " + user.getName());
         return user;
     }
 
-    @GetMapping
-    public List<User> getAll() {
+    public List<User> getAllUsers() {
         ArrayList<User> usersList = new ArrayList<>();
         for (User value : users.values()) {
             usersList.add(User.builder()
@@ -66,13 +66,14 @@ public class UserController {
                     .login(value.getLogin())
                     .name(value.getName())
                     .birthday(value.getBirthday())
+                    .friends(value.getFriends())
                     .build());
         }
         return usersList;
     }
 
-    @GetMapping(path = {"/user"})
-    public User getById(@RequestBody int id) {
+    public User getUserById(int id) {
+        userIdIsExist(id);
         User user = users.get(id);
         return User.builder()
                 .id(user.getId())
@@ -80,7 +81,9 @@ public class UserController {
                 .login(user.getLogin())
                 .name(user.getName())
                 .birthday(user.getBirthday())
+                .friends(user.getFriends())
                 .build();
+
     }
 
     public int getNewId() {
@@ -93,23 +96,30 @@ public class UserController {
 
     private void checkUser(User user) {
         if (StringUtils.isBlank(user.getEmail())) {
-            throw new InvalidEmailException("Адрес электронной почты не может быть пустым.");
+            throw new IncorrectParameterException("Адрес электронной почты не может быть пустым.");
         }
         if (!user.getEmail().contains("@")) {
-            throw new InvalidEmailException("Некорректный адрес электронной почты");
+            throw new IncorrectParameterException("Некорректный адрес электронной почты");
         }
         if (StringUtils.isBlank(user.getLogin())) {
-            throw new UserLoginException("Логин пользователя не может быть пустым");
+            throw new IncorrectParameterException("Логин пользователя не может быть пустым");
         }
         if (user.getLogin().contains(" ")) {
-            throw new UserLoginException("Логин пользователя не может содержать пробелы");
+            throw new IncorrectParameterException("Логин пользователя не может содержать пробелы");
         }
         if (StringUtils.isBlank(user.getName())) {
             user.setName(user.getLogin());
         }
         if (user.getBirthday() != null && !user.getBirthday().toString().isBlank() &&
                 user.getBirthday().isAfter(LocalDate.now())) {
-            throw new UserBirthdayException("Дата рождения не может быть в будущем");
+            throw new IncorrectParameterException("Дата рождения не может быть в будущем");
+        }
+    }
+
+    public void userIdIsExist(int id) {
+        if ((id <= 0) || (!users.containsKey(id))) {
+            log.error("Передан некорректный id " + id);
+            throw new UserNotFoundException("Некорректный id " + id);
         }
     }
 }
