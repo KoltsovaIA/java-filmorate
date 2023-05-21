@@ -20,10 +20,10 @@ public class MpaDbStorage {
         this.jdbcTemplate = jdbcTemplate;
     }
 
-    public List<Mpa> getAllMpa() {
+    public List<Mpa> getAllMpa(){
         List<Mpa> allMpa = new LinkedList<>();
         SqlRowSet mpaRow = jdbcTemplate.queryForRowSet("SELECT * FROM mpa ORDER BY mpa_id");
-        while(mpaRow.next()) {
+        while(mpaRow.next()){
            Mpa mpa = Mpa.builder()
                     .id(mpaRow.getInt("mpa_id"))
                     .name(mpaRow.getString("mpa_name"))
@@ -33,7 +33,7 @@ public class MpaDbStorage {
         return allMpa;
     }
 
-    public Mpa getMpaById(int id) {
+    public Mpa getMpaById(int id){
         mpaIdIsExist(id);
         Mpa mpa = new Mpa(null, null);
         SqlRowSet mpaRow = jdbcTemplate.queryForRowSet("SELECT * FROM mpa WHERE mpa_id = ?", id);
