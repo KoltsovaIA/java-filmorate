@@ -1,7 +1,7 @@
 package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.FilmAlreadyExistException;
 import ru.yandex.practicum.filmorate.exception.IncorrectParameterException;
@@ -16,13 +16,13 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 public class FilmService {
+
     private final FilmStorage filmStorage;
     private final UserStorage userStorage;
 
-    @Autowired
-    public FilmService(FilmStorage filmStorage, UserStorage userStorage) {
+    public FilmService(@Qualifier("filmDbStorage") FilmStorage filmStorage,
+                       @Qualifier("userDbStorage") UserStorage userStorage) {
         this.filmStorage = filmStorage;
-
         this.userStorage = userStorage;
     }
 
@@ -47,8 +47,9 @@ public class FilmService {
             log.error("Невозможно удалить лайк.");
             throw new UserNotFoundException("Вы еще не ставили лайк этому фильму.");
         }
-        filmStorage.getFilmById(id).getLikes().remove(userId);
-        filmStorage.update(filmStorage.getFilmById(id));
+        Film film = filmStorage.getFilmById(id);
+        film.getLikes().remove(userId);
+        filmStorage.update(film);
         log.info("Пользователь " + userStorage.getUserById(userId) + " удалил лайк фильму "
                 + filmStorage.getFilmById(id));
     }
@@ -59,7 +60,6 @@ public class FilmService {
         }
         Set<Film> sortedByLikes = new LinkedHashSet<>();
         List<Film> allFilms = filmStorage.getAllFilms();
-        log.info(allFilms.toString());
         if (allFilms.size() != 0) {
             Comparator<Film> comparator = Comparator.comparingInt((Film film) -> film.getLikes().size());
             sortedByLikes = filmStorage.getAllFilms().stream().sorted(comparator.reversed()).limit(count)

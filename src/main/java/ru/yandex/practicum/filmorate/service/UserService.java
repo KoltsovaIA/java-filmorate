@@ -1,7 +1,7 @@
 package ru.yandex.practicum.filmorate.service;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.UserAlreadyExistException;
 import ru.yandex.practicum.filmorate.exception.UserNotFoundException;
@@ -14,11 +14,11 @@ import java.util.Set;
 
 @Slf4j
 @Service
+@Qualifier("userService")
 public class UserService {
     private final UserStorage userStorage;
 
-    @Autowired
-    public UserService(UserStorage userStorage) {
+    public UserService(@Qualifier("userDbStorage") UserStorage userStorage) {
         this.userStorage = userStorage;
     }
 
@@ -26,12 +26,8 @@ public class UserService {
         userStorage.userIdIsExist(friendId);
         userStorage.userIdIsExist(id);
         User user = userStorage.getUserById(id);
-        User friend = userStorage.getUserById(friendId);
         if (user.getFriends() == null) {
             user.setFriends(new LinkedHashSet<>());
-        }
-        if (friend.getFriends() == null) {
-            friend.setFriends(new LinkedHashSet<>());
         }
         if (!user.getFriends().add(friendId)) {
             log.error("Пользователь с id " + friendId + " уже добавлен в друзья у пользователя" +
@@ -39,23 +35,22 @@ public class UserService {
             throw new UserAlreadyExistException("Этот пользователь уже добавлен в друзья.");
         }
         log.info(user.toString());
+        user.getFriends().add(friendId);
         userStorage.update(user);
-        log.info("Пользователь " + user.getName() + " добавлен в друзья");
-        friend.getFriends().add(id);
-        log.info(friend.toString());
-        userStorage.update(friend);
-        log.info("Пользователь " + userStorage.getUserById(friendId).getName() + " добавлен в  друзья");
+        log.info("Пользователь " + userStorage.getUserById(friendId).getName() + " с id " + friendId +
+                " добавлен в  друзья к пользователю " + userStorage.getUserById(id).getName() + " с id " + id);
     }
 
     public void deleteFriend(int id, int friendId) {
         userStorage.userIdIsExist(friendId);
         userStorage.userIdIsExist(id);
-        if (!userStorage.getUserById(id).getFriends().contains(friendId)) {
+        User user = userStorage.getUserById(id);
+        if (!user.getFriends().contains(friendId)) {
             log.error("Пользователя с id " + friendId + " нет в списке друзей.");
             throw new UserNotFoundException("Этого пользователя нет в друзьях.");
         }
-        userStorage.getUserById(id).getFriends().remove(friendId);
-        userStorage.update(userStorage.getUserById(id));
+        user.getFriends().remove(friendId);
+        userStorage.update(user);
         log.info("Пользователь " + userStorage.getUserById(friendId).getName() + " удален из друзей");
         userStorage.getUserById(friendId).getFriends().remove(id);
         userStorage.update(userStorage.getUserById(friendId));
