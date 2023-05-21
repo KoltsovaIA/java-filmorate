@@ -23,8 +23,7 @@ public class MpaDbStorage {
     public List<Mpa> getAllMpa() {
         List<Mpa> allMpa = new LinkedList<>();
         SqlRowSet mpaRow = jdbcTemplate.queryForRowSet("SELECT * FROM mpa ORDER BY mpa_id");
-        while(mpaRow.next())
-        {
+        while(mpaRow.next()) {
            Mpa mpa = Mpa.builder()
                     .id(mpaRow.getInt("mpa_id"))
                     .name(mpaRow.getString("mpa_name"))
