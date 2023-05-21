@@ -184,8 +184,8 @@ public class DbFilmControllerTest {
         filmController.addLike(filmId, userId);
         assertEquals(1, filmController.getFilmById(filmId).getLikes().size(),
                 "Метод addLike работает некорректно");
-        assertTrue(filmController.getFilmById(filmId).getLikes().
-                        contains(userController.getUserById(userId).getId()),
+        assertTrue(filmController.getFilmById(filmId).getLikes()
+                                .contains(userController.getUserById(userId).getId()),
                 "Метод addLike работает некорректно");
     }
 
@@ -217,8 +217,8 @@ public class DbFilmControllerTest {
         filmController.deleteLike(filmId, user1Id);
         assertEquals(1, filmController.getFilmById(filmId).getLikes().size(),
                 "Метод deleteLike работает некорректно. Размер списка лайков изменился не верно/не изменился");
-        assertTrue(filmController.getFilmById(filmId).getLikes().
-                        contains(userController.getUserById(user2Id).getId()),
+        assertTrue(filmController.getFilmById(filmId).getLikes()
+                                .contains(userController.getUserById(user2Id).getId()),
                 "Метод deleteLike работает некорректно. Удален неверный лайк");
     }
 
