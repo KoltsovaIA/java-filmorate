@@ -17,7 +17,7 @@ class UserControllerTest {
     private User user;
     private final InMemoryUserStorage userStorage = new InMemoryUserStorage();
     private final UserService userService = new UserService(userStorage);
-    private final UserController userController = new UserController(userStorage, userService);
+    private final UserController userController = new UserController(userService);
 
     @BeforeEach
     public void beforeEach() {
@@ -33,7 +33,7 @@ class UserControllerTest {
     @Test
     void createWithCorrectAttributesTest() {
         userController.create(user);
-        User testUser = userController.getUserById(userController.getLastId());
+        User testUser = userController.getUserById(userStorage.getLastId());
         System.out.println(testUser.getId());
         assertEquals(user, testUser, "Метод create работает некорректно. Пользователи не совпадают");
         testUser.setLogin("Kjf");
@@ -72,7 +72,7 @@ class UserControllerTest {
         user.setName(null);
         user.setLogin("Логин");
         userController.create(user);
-        User testUser = userController.getUserById(userController.getLastId());
+        User testUser = userController.getUserById(userService.getLastId());
         assertEquals("Логин", testUser.getName(),
                 "Метод create работает некорректно. " +
                         "Добавлен пользователя c пустым именем, имя должно равняться логину");
@@ -101,10 +101,10 @@ class UserControllerTest {
     @Test
     void updateTest() {
         userController.create(user);
-        user.setId(userController.getLastId());
+        user.setId(userService.getLastId());
         user.setName("Новое Имя");
         userController.update(user);
-        User testUser = userController.getUserById(userController.getLastId());
+        User testUser = userController.getUserById(userService.getLastId());
         assertEquals(user, testUser, "Метод update работает некорректно. Пользователи не совпадают");
         assertEquals(1, userController.getAllUsers().size(),
                 "Метод update работает некорректно. Неверное число пользователей");
@@ -115,10 +115,10 @@ class UserControllerTest {
     @Test
     void getAllUsersTest() {
         userController.create(user);
-        User testUser1 = userController.getUserById(userController.getLastId());
+        User testUser1 = userController.getUserById(userService.getLastId());
         user.setEmail("example1@example.ru");
         userController.create(user);
-        User testUser2 = userController.getUserById(userController.getLastId());
+        User testUser2 = userController.getUserById(userService.getLastId());
         List<User> testUsers = userController.getAllUsers();
         assertEquals(2, testUsers.size(),
                 "Метод getAllUsers работает некорректно. Неверное число пользователей");

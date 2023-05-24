@@ -1,8 +1,8 @@
 package ru.yandex.practicum.filmorate.storage;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
@@ -15,20 +15,12 @@ import java.time.LocalDate;
 import java.util.*;
 
 @Slf4j
+@RequiredArgsConstructor
 @Component("filmDbStorage")
-@Qualifier("filmDbStorage")
 public class FilmDbStorage implements FilmStorage {
     private final JdbcTemplate jdbcTemplate;
     private final GenreDbStorage genreDbStorage;
     private final MpaDbStorage mpaDbStorage;
-
-    public FilmDbStorage(JdbcTemplate jdbcTemplate,
-                         GenreDbStorage genreDbStorage,
-                         MpaDbStorage mpaDbStorage) {
-        this.jdbcTemplate = jdbcTemplate;
-        this.genreDbStorage = genreDbStorage;
-        this.mpaDbStorage = mpaDbStorage;
-    }
 
     @Override
     public List<Film> getAllFilms() {
@@ -98,7 +90,7 @@ public class FilmDbStorage implements FilmStorage {
     public Film getFilmById(int id) {
         SqlRowSet filmRows = jdbcTemplate.queryForRowSet("SELECT * FROM films WHERE film_id = ?", id);
         if (filmRows.next()) {
-            Film film = Film.builder()
+            return Film.builder()
                     .id(filmRows.getInt("film_id"))
                     .name(filmRows.getString("film_name"))
                     .genres(genreDbStorage.getFilmGenres(id))
@@ -108,7 +100,6 @@ public class FilmDbStorage implements FilmStorage {
                     .likes(getLikes(id))
                     .mpa(mpaDbStorage.getMpaById(filmRows.getInt("mpa_id")))
                     .build();
-            return film;
         } else {
             log.error("Фильм с идентификатором {} не найден.", id);
             throw new FilmNotFoundException("Фильм с id " + id + " не найден.");

@@ -1,51 +1,38 @@
 package ru.yandex.practicum.filmorate.controller;
 
-import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.web.bind.annotation.*;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.service.FilmService;
-import ru.yandex.practicum.filmorate.storage.FilmStorage;
 
 import java.util.*;
 
-@Slf4j
 @RestController
 @RequestMapping("/films")
+@RequiredArgsConstructor
 public class FilmController {
-
-    private final FilmStorage filmStorage;
-    private final FilmService filmService;
-
     @Autowired
-    public FilmController(@Qualifier("filmDbStorage") FilmStorage filmStorage, FilmService filmService) {
-        this.filmStorage = filmStorage;
-        this.filmService = filmService;
-    }
+    private final FilmService filmService;
 
     @PostMapping
     public Film create(@RequestBody Film film) {
-        return filmStorage.create(film);
+        return filmService.create(film);
     }
 
     @PutMapping
     public Film update(@RequestBody Film film) {
-        return filmStorage.update(film);
+        return filmService.update(film);
     }
 
     @GetMapping
     public List<Film> getAllFilms() {
-        return filmStorage.getAllFilms();
+        return filmService.getAllFilms();
     }
 
     @GetMapping(path = {"/{id}"})
     public Film getFilmById(@PathVariable Integer id) {
-        return filmStorage.getFilmById(id);
-    }
-
-    public int getLastId() {
-        return filmStorage.getLastId();
+        return filmService.getFilmById(id);
     }
 
     @PutMapping({"/{id}/like/{userId}"})

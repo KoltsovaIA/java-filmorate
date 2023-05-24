@@ -10,6 +10,8 @@ import ru.yandex.practicum.filmorate.exception.*;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.User;
 import ru.yandex.practicum.filmorate.service.FilmService;
+import ru.yandex.practicum.filmorate.service.UserService;
+import ru.yandex.practicum.filmorate.storage.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.InMemoryFilmStorage;
 import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
 
@@ -28,10 +30,11 @@ class FilmControllerTest {
     private Film film;
     private User user;
 
-    private final InMemoryFilmStorage filmStorage = new InMemoryFilmStorage();
+    private final FilmStorage filmStorage = new InMemoryFilmStorage();
     private final InMemoryUserStorage userStorage = new InMemoryUserStorage();
-    private final FilmService filmService = new FilmService(filmStorage, userStorage);
-    private final FilmController filmController = new FilmController(filmStorage, filmService);
+    private final UserService userService = new UserService(userStorage);
+    private final FilmService filmService = new FilmService(filmStorage, userService);
+    private final FilmController filmController = new FilmController(filmService);
 
     @BeforeEach
     public void beforeEach() {
@@ -55,7 +58,7 @@ class FilmControllerTest {
     @Test
     void createWithCorrectAttributesTest() {
         filmController.create(film);
-        Film testFilm = filmController.getFilmById(filmController.getLastId());
+        Film testFilm = filmController.getFilmById(filmService.getLastId());
         assertEquals(film, testFilm, "Метод create работает некорректно. Фильмы не совпадают");
         testFilm.setName("Kjd");
         assertNotEquals(film, testFilm, "Метод create работает некорректно.Фильмы совпадают");
@@ -121,10 +124,10 @@ class FilmControllerTest {
     @Test
     void updateTest() {
         filmController.create(film);
-        film.setId(filmController.getLastId());
+        film.setId(filmService.getLastId());
         film.setDescription("Другое описание фильма");
         filmController.update(film);
-        Film testFilm = filmController.getFilmById(filmController.getLastId());
+        Film testFilm = filmController.getFilmById(filmService.getLastId());
         assertEquals(film, testFilm, "Метод update работает некорректно. Фильмы не совпадают");
         assertEquals(1, filmController.getAllFilms().size(),
                 "Метод update работает некорректно. Неверное число фильмов");
@@ -133,10 +136,10 @@ class FilmControllerTest {
     @Test
     void getAllFilms() {
         filmController.create(film);
-        Film testFilm1 = filmController.getFilmById(filmController.getLastId());
+        Film testFilm1 = filmController.getFilmById(filmService.getLastId());
         film.setName("Другое название фильма");
         filmController.create(film);
-        Film testFilm2 = filmController.getFilmById(filmController.getLastId());
+        Film testFilm2 = filmController.getFilmById(filmService.getLastId());
         List<Film> testFilms = filmController.getAllFilms();
         assertEquals(2, testFilms.size(),
                 "Метод getAllFilms работает некорректно. Неверное число фильмов");

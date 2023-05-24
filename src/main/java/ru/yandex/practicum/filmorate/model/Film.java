@@ -4,6 +4,8 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDate;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -12,10 +14,10 @@ import java.util.Set;
 public class Film {
     private int id;
     private String name;
-    private List<Genre> genres;
+    private List<Genre> genres = new LinkedList<>();
     private String description;
     private LocalDate releaseDate;
     private int duration;
-    private Set<Integer> likes;
+    private Set<Integer> likes = new LinkedHashSet<>();
     private Mpa mpa;
 }

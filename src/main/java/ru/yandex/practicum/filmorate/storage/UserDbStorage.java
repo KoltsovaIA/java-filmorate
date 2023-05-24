@@ -1,8 +1,8 @@
 package ru.yandex.practicum.filmorate.storage;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.IncorrectParameterException;
@@ -14,15 +14,11 @@ import java.time.LocalDate;
 import java.util.*;
 
 @Slf4j
+@RequiredArgsConstructor
 @Component("userDbStorage")
-@Qualifier("userDbStorage")
 public class UserDbStorage implements UserStorage {
 
     private final JdbcTemplate jdbcTemplate;
-
-    public UserDbStorage(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
 
     @Override
     public List<User> getAllUsers() {
@@ -74,7 +70,7 @@ public class UserDbStorage implements UserStorage {
     public User getUserById(int id) {
         SqlRowSet userRows = jdbcTemplate.queryForRowSet("SELECT * FROM users WHERE user_id = ?", id);
         if (userRows.next()) {
-            User user = User.builder()
+            return User.builder()
                     .id(userRows.getInt("user_id"))
                     .email(userRows.getString("user_email"))
                     .login(userRows.getString("user_login"))
@@ -82,7 +78,6 @@ public class UserDbStorage implements UserStorage {
                     .birthday(Objects.requireNonNull(userRows.getDate("birthday")).toLocalDate())
                     .friends(getFriendsOfUser(id))
                     .build();
-            return user;
         } else {
             log.error("Пользователь с идентификатором {} не найден.", id);
             throw new UserNotFoundException("Пользователь с id " + id + " не найден.");

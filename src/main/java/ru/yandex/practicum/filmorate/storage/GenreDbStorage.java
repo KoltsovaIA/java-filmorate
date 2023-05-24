@@ -1,5 +1,6 @@
 package ru.yandex.practicum.filmorate.storage;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
@@ -12,14 +13,10 @@ import ru.yandex.practicum.filmorate.exception.IdNotFoundException;
 import ru.yandex.practicum.filmorate.model.Genre;
 
 @Slf4j
+@RequiredArgsConstructor
 @Component
 public class GenreDbStorage {
     private final JdbcTemplate jdbcTemplate;
-
-    @Autowired
-    public GenreDbStorage(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
 
     List<Genre> getFilmGenres(int filmId) {
         filmIdIsExist(filmId);
@@ -54,6 +51,7 @@ public class GenreDbStorage {
             genre.setId(genreRow.getInt("genre_id"));
             genre.setName(genreRow.getString("genre_name"));
         } else {
+            log.error("Не найден id " + id);
             throw new IdNotFoundException("id не найден");
         }
         return genre;

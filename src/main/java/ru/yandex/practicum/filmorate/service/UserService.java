@@ -10,11 +10,11 @@ import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 @Slf4j
 @Service
-@Qualifier("userService")
 public class UserService {
     private final UserStorage userStorage;
 
@@ -83,5 +83,29 @@ public class UserService {
         }
         log.info("Список общих друзей сформирован: " + firstUserFriends);
         return firstUserFriends;
+    }
+
+    public User create(User user) {
+        return userStorage.create(user);
+    }
+
+    public User update(User user) {
+        return userStorage.update(user);
+    }
+
+    public List<User> getAllUsers() {
+        return userStorage.getAllUsers();
+    }
+
+    public User getUserById(int id) {
+        return userStorage.getUserById(id);
+    }
+
+    public int getLastId() {
+        return userStorage.getLastId();
+    }
+
+    public void userIdIsExist(int id) {
+        userStorage.userIdIsExist(id);
     }
 }
