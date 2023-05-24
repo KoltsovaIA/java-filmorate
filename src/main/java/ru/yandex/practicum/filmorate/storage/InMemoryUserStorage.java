@@ -9,7 +9,7 @@ import ru.yandex.practicum.filmorate.model.User;
 import java.time.LocalDate;
 import java.util.*;
 
-@Component
+@Component("inMemoryUserStorage")
 @Slf4j
 public class InMemoryUserStorage implements UserStorage {
     private final Map<Integer, User> users = new HashMap<>();
@@ -83,7 +83,6 @@ public class InMemoryUserStorage implements UserStorage {
                 .birthday(user.getBirthday())
                 .friends(user.getFriends())
                 .build();
-
     }
 
     public int getNewId() {

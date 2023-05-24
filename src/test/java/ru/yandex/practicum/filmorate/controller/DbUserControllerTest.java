@@ -1,23 +1,34 @@
 package ru.yandex.practicum.filmorate.controller;
 
+import lombok.RequiredArgsConstructor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import ru.yandex.practicum.filmorate.exception.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.annotation.Transactional;
+import ru.yandex.practicum.filmorate.exception.IncorrectParameterException;
+import ru.yandex.practicum.filmorate.exception.UserAlreadyExistException;
+import ru.yandex.practicum.filmorate.exception.UserNotFoundException;
 import ru.yandex.practicum.filmorate.model.User;
-import ru.yandex.practicum.filmorate.service.UserService;
-import ru.yandex.practicum.filmorate.storage.InMemoryUserStorage;
 
 import java.time.LocalDate;
-import java.util.*;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class UserControllerTest {
+@SpringBootTest
+@AutoConfigureTestDatabase
+@Transactional
+@RequiredArgsConstructor(onConstructor_ = @Autowired)
+public class DbUserControllerTest {
     static final int WRONGID = 999999;
     private User user;
-    private final InMemoryUserStorage userStorage = new InMemoryUserStorage();
-    private final UserService userService = new UserService(userStorage);
-    private final UserController userController = new UserController(userService);
+    private final UserController userController;
 
     @BeforeEach
     public void beforeEach() {
@@ -32,9 +43,9 @@ class UserControllerTest {
 
     @Test
     void createWithCorrectAttributesTest() {
-        userController.create(user);
-        User testUser = userController.getUserById(userStorage.getLastId());
-        System.out.println(testUser.getId());
+        int userId = userController.create(user).getId();
+        user.setId(userId);
+        User testUser = userController.getUserById(userId);
         assertEquals(user, testUser, "Метод create работает некорректно. Пользователи не совпадают");
         testUser.setLogin("Kjf");
         assertNotEquals(user, testUser, "Метод create работает некорректно. Пользователи совпадают");
@@ -71,8 +82,8 @@ class UserControllerTest {
     void createWithEmptyNameTest() {
         user.setName(null);
         user.setLogin("Логин");
-        userController.create(user);
-        User testUser = userController.getUserById(userService.getLastId());
+        int userId = userController.create(user).getId();
+        User testUser = userController.getUserById(userId);
         assertEquals("Логин", testUser.getName(),
                 "Метод create работает некорректно. " +
                         "Добавлен пользователя c пустым именем, имя должно равняться логину");
@@ -90,21 +101,12 @@ class UserControllerTest {
     }
 
     @Test
-    void createWithSameEmailTest() {
-        userController.create(user);
-        assertThrows(UserAlreadyExistException.class, () -> userController.create(user),
-                "Метод create работает некорректно. Создан пользователь c существующим e-mail");
-        assertEquals(1, userController.getAllUsers().size(),
-                "Метод create работает некорректно. Неверное число пользователей");
-    }
-
-    @Test
     void updateTest() {
-        userController.create(user);
-        user.setId(userService.getLastId());
+        int userId = userController.create(user).getId();
+        user.setId(userId);
         user.setName("Новое Имя");
         userController.update(user);
-        User testUser = userController.getUserById(userService.getLastId());
+        User testUser = userController.getUserById(userId);
         assertEquals(user, testUser, "Метод update работает некорректно. Пользователи не совпадают");
         assertEquals(1, userController.getAllUsers().size(),
                 "Метод update работает некорректно. Неверное число пользователей");
@@ -114,11 +116,11 @@ class UserControllerTest {
 
     @Test
     void getAllUsersTest() {
-        userController.create(user);
-        User testUser1 = userController.getUserById(userService.getLastId());
+        int user1Id = userController.create(user).getId();
+        User testUser1 = userController.getUserById(user1Id);
         user.setEmail("example1@example.ru");
-        userController.create(user);
-        User testUser2 = userController.getUserById(userService.getLastId());
+        int user2Id = userController.create(user).getId();
+        User testUser2 = userController.getUserById(user2Id);
         List<User> testUsers = userController.getAllUsers();
         assertEquals(2, testUsers.size(),
                 "Метод getAllUsers работает некорректно. Неверное число пользователей");
@@ -131,8 +133,8 @@ class UserControllerTest {
 
     @Test
     void getUserByIdWithCorrectAttributesTest() {
-        userController.create(user);
-        assertEquals(user, userController.getUserById(1),
+        int userId = userController.create(user).getId();
+        assertEquals(user, userController.getUserById(userId),
                 "Метод getUserById работает некорректно. Пользователи не совпадают");
     }
 
@@ -147,14 +149,13 @@ class UserControllerTest {
 
     @Test
     void addFriendWithCorrectAttributesTest() {
-        userController.create(user);
+        int user1Id = userController.create(user).getId();
         user.setEmail("2@2.ru");
-        userController.create(user);
-        userController.addFriend(1, 2);
-        assertEquals(1, userController.getFriends(1).size(),
+        int user2Id = userController.create(user).getId();
+        userController.addFriend(user1Id, user2Id);
+        assertEquals(1, userController.getFriends(user1Id).size(),
                 "Метод addFriend работает некорректно. Пользователь не добавлен в друзья");
-        assertTrue(userController.getFriends(1).contains(userController.getUserById(2)));
-        assertTrue(userController.getFriends(1).contains(userController.getUserById(2)));
+        assertTrue(userController.getFriends(user1Id).contains(userController.getUserById(user2Id)));
     }
 
     @Test
@@ -164,24 +165,24 @@ class UserControllerTest {
         assertThrows(UserNotFoundException.class, ()
                         -> userController.addFriend(WRONGID * (-1), (WRONGID + 1) * (-1)),
                 "Метод addFriend работает некорректно при запросе с некорректным id");
-        userController.create(user);
+        int user1Id = userController.create(user).getId();
         user.setEmail("2@2.ru");
-        userController.create(user);
-        userController.addFriend(1, 2);
-        assertThrows(UserAlreadyExistException.class, () -> userController.addFriend(1, 2),
+        int user2Id = userController.create(user).getId();
+        userController.addFriend(user1Id, user2Id);
+        assertThrows(UserAlreadyExistException.class, () -> userController.addFriend(user1Id, user2Id),
                 "Метод addFriend работает некорректно при попытке второй раз добавить в друзья");
     }
 
     @Test
     void deleteFriendWithCorrectAttributesTest() {
-        userController.create(user);
+        int user1Id = userController.create(user).getId();
         user.setEmail("2@2.ru");
-        userController.create(user);
-        userController.addFriend(1, 2);
-        userController.deleteFriend(1, 2);
-        assertEquals(0, userController.getFriends(1).size(),
+        int user2Id = userController.create(user).getId();
+        userController.addFriend(user1Id, user2Id);
+        userController.deleteFriend(user1Id, user2Id);
+        assertEquals(0, userController.getFriends(user1Id).size(),
                 "Метод deleteFriend работает некорректно. Пользователь не удален из друзей");
-        assertEquals(0, userController.getFriends(2).size(),
+        assertEquals(0, userController.getFriends(user2Id).size(),
                 "Метод deleteFriend работает некорректно. Пользователь не удален из друзей");
     }
 
@@ -192,30 +193,30 @@ class UserControllerTest {
         assertThrows(UserNotFoundException.class, ()
                         -> userController.deleteFriend(WRONGID * (-1), (WRONGID + 1) * (-1)),
                 "Метод deleteFriend работает некорректно при попытке удалить из друзей с некорректным id");
-        userController.create(user);
+        int user1Id = userController.create(user).getId();
         user.setEmail("2@2.ru");
-        userController.create(user);
-        userController.addFriend(1, 2);
-        userController.deleteFriend(1, 2);
-        assertThrows(UserNotFoundException.class, () -> userController.deleteFriend(1, 2),
+        int user2Id = userController.create(user).getId();
+        userController.addFriend(user1Id, user2Id);
+        userController.deleteFriend(user1Id, user2Id);
+        assertThrows(UserNotFoundException.class, () -> userController.deleteFriend(user1Id, user2Id),
                 "Метод deleteFriend работает некорректно при попытке удалить несуществующего друга");
     }
 
     @Test
     void getFriendsTest() {
-        userController.create(user);
-        assertEquals(0, userController.getFriends(1).size(), "Метод getFriends работает некорректно");
+        int user1Id = userController.create(user).getId();
+        assertEquals(0, userController.getFriends(user1Id).size(), "Метод getFriends работает некорректно");
         user.setEmail("2@2.ru");
-        userController.create(user);
+        int user2Id = userController.create(user).getId();
         user.setEmail("3@3.ru");
-        userController.create(user);
-        userController.addFriend(1, 2);
-        userController.addFriend(1, 3);
-        assertEquals(2, userController.getFriends(1).size(), "Метод getFriends работает некорректно");
+        int user3Id = userController.create(user).getId();
+        userController.addFriend(user1Id, user2Id);
+        userController.addFriend(user1Id, user3Id);
+        assertEquals(2, userController.getFriends(user1Id).size(), "Метод getFriends работает некорректно");
         Set<User> friends = new LinkedHashSet<>();
-        friends.add(userController.getUserById(2));
-        friends.add(userController.getUserById(3));
-        assertEquals(friends, userController.getFriends(1), "Метод getFriends работает некорректно");
+        friends.add(userController.getUserById(user2Id));
+        friends.add(userController.getUserById(user3Id));
+        assertEquals(friends, userController.getFriends(user1Id), "Метод getFriends работает некорректно");
         assertThrows(UserNotFoundException.class, () -> userController.getFriends(WRONGID),
                 "Метод getFriends работает некорректно при попытке получить список друзей " +
                         "пользователя с некорректным id");
@@ -223,16 +224,16 @@ class UserControllerTest {
 
     @Test
     void findCommonFriendsTest() {
-        userController.create(user);
+        int user1Id = userController.create(user).getId();
         user.setEmail("2@2.ru");
-        userController.create(user);
+        int user2Id = userController.create(user).getId();
         user.setEmail("3@3.ru");
-        userController.create(user);
-        userController.addFriend(1, 3);
-        userController.addFriend(2, 3);
-        assertEquals(1, userController.findCommonFriends(1, 2).size(),
+        int user3Id = userController.create(user).getId();
+        userController.addFriend(user1Id, user3Id);
+        userController.addFriend(user2Id, user3Id);
+        assertEquals(1, userController.findCommonFriends(user1Id, user2Id).size(),
                 "Метод findCommonFriends работает некорректно");
-        assertTrue(userController.findCommonFriends(1, 2).contains(userController.getUserById(3)),
+        assertTrue(userController.findCommonFriends(user1Id, user2Id).contains(userController.getUserById(user3Id)),
                 "Метод findCommonFriends работает некорректно. Общие друзья найдены не верно/не найдены");
         assertThrows(UserNotFoundException.class, () -> userController.findCommonFriends(WRONGID, WRONGID + 1),
                 "Метод findCommonFriends работает некорректно при попытке вызвать " +

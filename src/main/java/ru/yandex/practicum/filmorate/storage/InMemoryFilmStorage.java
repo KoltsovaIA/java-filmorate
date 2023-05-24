@@ -2,6 +2,7 @@ package ru.yandex.practicum.filmorate.storage;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 import ru.yandex.practicum.filmorate.exception.*;
 import ru.yandex.practicum.filmorate.model.Film;
@@ -10,7 +11,8 @@ import java.time.LocalDate;
 import java.util.*;
 
 
-@Component
+@Component("inMemoryFilmStorage")
+@Qualifier("inMemoryFilmStorage")
 @Slf4j
 public class InMemoryFilmStorage implements FilmStorage {
     private final Map<Integer, Film> films = new HashMap<>();
@@ -20,8 +22,7 @@ public class InMemoryFilmStorage implements FilmStorage {
         checkFilm(film);
         films.forEach((key, value) -> {
             if (value.getName().equals(film.getName())) {
-                throw new FilmAlreadyExistException("Фильм с названием " +
-                        film.getName() + " уже существует.");
+                throw new FilmAlreadyExistException("Фильм с названием " + film.getName() + " уже существует.");
             }
         });
         film.setId(getNewId());
@@ -29,10 +30,12 @@ public class InMemoryFilmStorage implements FilmStorage {
         films.put(film.getId(), Film.builder()
                 .id(film.getId())
                 .name(film.getName())
+                .genres(film.getGenres())
                 .description(film.getDescription())
                 .releaseDate(film.getReleaseDate())
                 .duration(film.getDuration())
                 .likes(film.getLikes())
+                .mpa(film.getMpa())
                 .build()
         );
         log.info("Фильм с названием " + film.getName() + " добавлен");
@@ -45,10 +48,12 @@ public class InMemoryFilmStorage implements FilmStorage {
         films.put(film.getId(), Film.builder()
                 .id(film.getId())
                 .name(film.getName())
+                .genres(film.getGenres())
                 .description(film.getDescription())
                 .releaseDate(film.getReleaseDate())
                 .duration(film.getDuration())
                 .likes(film.getLikes())
+                .mpa(film.getMpa())
                 .build()
         );
         log.info("Фильм с названием " + film.getName() + " добавлен");
@@ -61,10 +66,12 @@ public class InMemoryFilmStorage implements FilmStorage {
             filmsList.add(Film.builder()
                     .id(value.getId())
                     .name(value.getName())
+                    .genres(value.getGenres())
                     .description(value.getDescription())
                     .releaseDate(value.getReleaseDate())
                     .duration(value.getDuration())
                     .likes(value.getLikes())
+                    .mpa(value.getMpa())
                     .build());
         }
         return filmsList;
@@ -76,10 +83,12 @@ public class InMemoryFilmStorage implements FilmStorage {
         return Film.builder()
                 .id(film.getId())
                 .name(film.getName())
+                .genres(film.getGenres())
                 .description(film.getDescription())
                 .releaseDate(film.getReleaseDate())
                 .duration(film.getDuration())
                 .likes(film.getLikes())
+                .mpa(film.getMpa())
                 .build();
     }
 
@@ -116,6 +125,9 @@ public class InMemoryFilmStorage implements FilmStorage {
         }
         if (film.getLikes() == null) {
             film.setLikes(new LinkedHashSet<>());
+        }
+        if (film.getGenres() == null) {
+            film.setGenres(new LinkedList<>());
         }
     }
 
